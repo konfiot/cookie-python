@@ -1,54 +1,57 @@
 # coding=utf-8
 
-# Bell 202 Audio Frequency Shift Keying
-# http://n1vg.net/packet/
-
-import logging
-logger = logging.getLogger(__name__)
-
 import math
 import itertools
 import sys
 import audiogen
+import threading
 
 MARK_HZ = 900.0
 SPACE_HZ = 1500.0
 BAUD_RATE = 600.0
 
 TWO_PI = 2.0 * math.pi
+class Fsk(threading.Thread) :
+    def __init__(self, initial_data = b""):
+        threading.Thread.__init__(self)
+        self.to_send = initial_data
 
-def encode(data):
-	for sample in itertools.chain.from_iterable([modulatebyte(c) for c in data]):
-		yield sample
+    def encode(self, data):
+        for sample in itertools.chain.from_iterable([self.modulatebyte(c) for c in data]):
+            yield sample
 
-def modulatebyte(byte):
-	#print byte
-	seconds_per_sample = 1.0 / audiogen.sampler.FRAME_RATE
-	phase, seconds, bits = 0, 0, 0
+    def modulatebyte(self, byte):
+        #print byte
+        seconds_per_sample = 1.0 / audiogen.sampler.FRAME_RATE
+        phase, seconds, bits = 0, 0, 0
 
-	# construct generators
-	clock = (x / BAUD_RATE for x in itertools.count(1))
-	tones = (SPACE_HZ if i == 0 or not((ord(byte) >> (i-1)) & 1) and i <= 8 else MARK_HZ for i in range(10))
+        clock = (x / BAUD_RATE for x in itertools.count(1))
+        tones = (SPACE_HZ if i == 0 or not((ord(byte) >> (i-1)) & 1) and i <= 8 else MARK_HZ for i in range(10))
 
-	for boundary, frequency in itertools.izip(clock, tones):
-		# frequency of current symbol is determined by how much
-		# we advance the signal's phase in each audio frame
-		phase_change_per_sample = TWO_PI / (audiogen.sampler.FRAME_RATE / frequency)
+        for boundary, frequency in itertools.izip(clock, tones):
+            # frequency of current symbol is determined by how much
+            # we advance the signal's phase in each audio frame
+            phase_change_per_sample = TWO_PI / (audiogen.sampler.FRAME_RATE / frequency)
 
-		# produce samples for the current symbol
-		# until we reach the next clock boundary
-		while seconds < boundary:
-			yield math.sin(phase)
+            # produce samples for the current symbol
+            # until we reach the next clock boundary
+            while seconds < boundary:
+                yield math.sin(phase)
 
-			seconds += seconds_per_sample
-			phase += phase_change_per_sample
+                seconds += seconds_per_sample
+                phase += phase_change_per_sample
 
-			if phase > TWO_PI:
-				phase -= TWO_PI
+                if phase > TWO_PI:
+                    phase -= TWO_PI
 
-		bits += 1
-		#print int(frequency == MARK_HZ)
-		#print("bits = %d, time = %.7f ms, expected time = %.7f ms, error = %.7f ms, baud rate = %.6f Hz" \
-		#	% (bits, 1000 * seconds, 1000 * bits / BAUD_RATE, 1000 * (seconds - bits / BAUD_RATE), bits / seconds))
+            bits += 1
+            # print int(frequency == MARK_HZ)
 
-audiogen.sampler.write_wav(sys.stdout, encode(b"Dandandan"))
+    def feed(self, data):
+        self.to_send = data
+
+    def run(self):
+        while True:
+            audiogen.sampler.write_wav(sys.stdout, self.encode(self.to_send))
+
+
