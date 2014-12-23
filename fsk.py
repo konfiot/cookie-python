@@ -22,12 +22,13 @@ def encode(data):
 		yield sample
 
 def modulatebyte(byte):
+	#print byte
 	seconds_per_sample = 1.0 / audiogen.sampler.FRAME_RATE
 	phase, seconds, bits = 0, 0, 0
 
 	# construct generators
 	clock = (x / BAUD_RATE for x in itertools.count(1))
-	tones = (MARK_HZ if i == 0 or ((ord(byte) >> (i-1)) & 1) else SPACE_HZ for i in range(10))
+	tones = (SPACE_HZ if i == 0 or not((ord(byte) >> (i-1)) & 1) and i <= 8 else MARK_HZ for i in range(10))
 
 	for boundary, frequency in itertools.izip(clock, tones):
 		# frequency of current symbol is determined by how much
@@ -46,7 +47,8 @@ def modulatebyte(byte):
 				phase -= TWO_PI
 
 		bits += 1
+		#print int(frequency == MARK_HZ)
 		#print("bits = %d, time = %.7f ms, expected time = %.7f ms, error = %.7f ms, baud rate = %.6f Hz" \
 		#	% (bits, 1000 * seconds, 1000 * bits / BAUD_RATE, 1000 * (seconds - bits / BAUD_RATE), bits / seconds))
 
-kudiogen.sampler.write_wav(sys.stdout, encode(b"Dandandan"))
+audiogen.sampler.write_wav(sys.stdout, encode(b"Dandandan"))
