@@ -5,6 +5,7 @@ import itertools
 import sys
 import audiogen
 import threading
+import trame
 
 MARK_HZ = 900.0
 SPACE_HZ = 1500.0
@@ -48,7 +49,7 @@ class Fsk(threading.Thread) :
             # print int(frequency == MARK_HZ)
 
     def feed(self, data):
-        self.to_send = data
+        self.to_send = trame(data)
 
     def run(self):
         while True:
