@@ -26,7 +26,7 @@ class Fsk(threading.Thread) :
         phase, seconds, bits = 0, 0, 0
 
         clock = (x / BAUD_RATE for x in itertools.count(1))
-        tones = (SPACE_HZ if i == 0 or not((ord(byte) >> (i-1)) & 1) and i <= 8 else MARK_HZ for i in range(10))
+        tones = (SPACE_HZ if i == 0 or not((byte >> (i-1)) & 1) and i <= 8 else MARK_HZ for i in range(10))
 
         for boundary, frequency in itertools.izip(clock, tones):
             # frequency of current symbol is determined by how much
@@ -53,5 +53,4 @@ class Fsk(threading.Thread) :
     def run(self):
         while True:
             audiogen.sampler.write_wav(sys.stdout, self.encode(self.to_send))
-
 
