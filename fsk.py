@@ -49,9 +49,13 @@ class Fsk(threading.Thread) :
             # print int(frequency == MARK_HZ)
 
     def feed(self, data):
-        self.to_send = trame(data)
+        self.to_send = trame.trame(data)
 
     def run(self):
-        while True:
+        self.terminate = False
+        while not self.terminate:
             audiogen.sampler.write_wav(sys.stdout, self.encode(self.to_send))
+
+    def stop(self):
+        self.terminate = True
 
