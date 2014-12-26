@@ -10,7 +10,7 @@ CONF_FILE = "conf.json"
 def trame(data):
     conf = json.load(open(CONF_FILE, "r"))
 
-    out = bytearray([0xFF])
+    out = bytearray([conf["trame"]["startbyte"]])
 
     for i, val in enumerate(data): # Concaténation des valeurs des capteurs
         out += struct.pack("!"+ conf["sensors"][i], val)
