@@ -13,9 +13,10 @@ BAUD_RATE = 600.0
 
 TWO_PI = 2.0 * math.pi
 class Fsk(threading.Thread) :
-    def __init__(self, initial_data = b""):
+    def __init__(self, conf, initial_data = b""):
         threading.Thread.__init__(self)
         self.to_send = initial_data
+        self.conf = conf
 
     def encode(self, data):
         for sample in itertools.chain.from_iterable([self.modulatebyte(c) for c in data]):
@@ -49,7 +50,7 @@ class Fsk(threading.Thread) :
             # print int(frequency == MARK_HZ)
 
     def feed(self, data):
-        self.to_send = trame.trame(data)
+        self.to_send = trame.trame(data, conf)
 
     def run(self):
         self.terminate = False
