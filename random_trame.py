@@ -6,6 +6,7 @@ import struct
 import os
 import sys
 import time
+import slimdecoder
 
 parser = argparse.ArgumentParser(description='Generates a random trame')
 parser.add_argument('--length', type=int, default=5, help='Number of sensors (defaults to 5)')
@@ -25,7 +26,16 @@ else :
 
 N = args.N
 while N != 0:
-	args.out.write(trame.trame(struct.unpack(''.join(conf["sensors"]), os.urandom(struct.calcsize(''.join(conf["sensors"])))), conf))
+	vals = []
+	for fmt in conf["sensors"]:
+		val, = struct.unpack("!" + fmt, os.urandom(struct.calcsize(''.join(fmt))))
+		vals.append(val)
+
+	print(vals)
+	frame = trame.trame(vals, conf)
+	args.out.write(frame)
+	args.out.write(b"\n")
+	print(slimdecoder.slimdecode(frame, conf))
 	N -= 1
 	args.out.flush()
 	time.sleep(args.t)
