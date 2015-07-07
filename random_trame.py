@@ -6,7 +6,6 @@ import struct
 import os
 import sys
 import time
-import slimdecoder
 
 parser = argparse.ArgumentParser(description='Generates a random trame')
 parser.add_argument('--length', type=int, default=5, help='Number of sensors (defaults to 5)')
@@ -16,13 +15,13 @@ parser.add_argument('--startbyte', default=0xFF, type=int, help='Start byte (def
 parser.add_argument('--file', type=str, help='Input config file')
 parser.add_argument('--out', default=sys.stdout.buffer, type=argparse.FileType('wb'), help='Output file (defaults to stdout)')
 parser.add_argument('-N', type=int, default=-1, help='Number of frames to be generated (defaults to infinite)')
-parser.add_argument('-t', type=int, default=1, help='Time between two frames (defaults to 1s)')
+parser.add_argument('-t', type=int, default=1, help='Time between two frames in seconds (defaults to 1)')
 args = parser.parse_args()
 
 if args.file :
     conf = json.load(open(args.file, "r"))
-else :
-    conf = {"sensors": [args.valtype]*args.length, "trame":{"startbyte": args.startbyte, "ecc":{"length":args.ecclength}}}
+else: 
+    conf = {"sensors": [args.type]*args.length, "trame":{"startbyte": args.startbyte, "ecc":{"length":args.ecclength}}}
 
 N = args.N
 while N != 0:
@@ -31,11 +30,8 @@ while N != 0:
 		val, = struct.unpack("!" + fmt, os.urandom(struct.calcsize(''.join(fmt))))
 		vals.append(val)
 
-	print(vals)
 	frame = trame.trame(vals, conf)
 	args.out.write(frame)
-	args.out.write(b"\n")
-	print(slimdecoder.slimdecode(frame, conf))
 	N -= 1
 	args.out.flush()
 	time.sleep(args.t)
