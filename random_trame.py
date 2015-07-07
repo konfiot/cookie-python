@@ -27,7 +27,7 @@ N = args.N
 while N != 0:
 	vals = []
 	for fmt in conf["sensors"]:
-		val, = struct.unpack("!" + fmt, os.urandom(struct.calcsize(''.join(fmt))))
+		val = struct.unpack("!" + fmt, os.urandom(struct.calcsize(''.join(fmt))))
 		vals.append(val)
 
 	frame = trame.trame(vals, conf)
