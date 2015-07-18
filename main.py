@@ -4,6 +4,8 @@ import json
 import time
 import os
 import spidev
+from gps import GPS
+
 
 NUMBER_ANALOG = 8
 
@@ -30,11 +32,16 @@ with open("conf.json") as f:
 	vals = []
 	fsk = Fsk(conf)
 	fsk.start()
+
+	gps = GPS("/dev/ttyS3", 38400)
+	gps.start()
+
 	while True:
 		vals.append(getAnalog(NUMBER_ANALOG))
-		vals.append(getGPS())
+		vals.append(gps.get_data())
 		vals.append(getPing())
 		
+		print(gps.get_data())
 
 		#for fmt in conf["sensors"]:
 		#	val = struct.unpack("!" + fmt, os.urandom(struct.calcsize(''.join(fmt))))
