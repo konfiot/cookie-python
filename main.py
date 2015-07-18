@@ -8,8 +8,10 @@ import spidev
 NUMBER_ANALOG = 8
 
 
-def getChannel(i):
-	pass
+def getChannel(channel):
+	adc = spi.xfer2([1,(8+channel)<<4,0])
+	data = ((adc[1]&3) << 8) + adc[2]
+	return data
 
 def getAnalog(n):
 	return [readCHannel(i) for i in range(n)]
