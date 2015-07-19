@@ -10,6 +10,7 @@ import trame
 MARK_HZ = 900.0
 SPACE_HZ = 1500.0
 BAUD_RATE = 600.0
+FRAME_RATE = audiogen.sampler.FRAME_RATE
 
 TWO_PI = 2.0 * math.pi
 class Fsk(threading.Thread) :
@@ -19,12 +20,12 @@ class Fsk(threading.Thread) :
         self.conf = conf
 
     def encode(self, data):
-        for sample in itertools.chain.from_iterable([self.modulatebyte(c) for c in data]):
+        for sample in itertools.chain.from_iterable((self.modulatebyte(c) for c in data)):
             yield sample
 
     def modulatebyte(self, byte):
         #print byte
-        seconds_per_sample = 1.0 / audiogen.sampler.FRAME_RATE
+        seconds_per_sample = 1.0 / FRAME_RATE
         phase, seconds, bits = 0, 0, 0
 
         clock = (x / BAUD_RATE for x in itertools.count(1))
@@ -33,7 +34,7 @@ class Fsk(threading.Thread) :
         for boundary, frequency in itertools.izip(clock, tones):
             # frequency of current symbol is determined by how much
             # we advance the signal's phase in each audio frame
-            phase_change_per_sample = TWO_PI / (audiogen.sampler.FRAME_RATE / frequency)
+            phase_change_per_sample = TWO_PI / (FRAME_RATE / frequency)
 
             # produce samples for the current symbol
             # until we reach the next clock boundary

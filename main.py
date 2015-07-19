@@ -1,3 +1,5 @@
+#!/usr/bin/python2
+
 from fsk import Fsk
 import struct
 import json 
@@ -9,14 +11,17 @@ from gps import GPS
 
 NUMBER_ANALOG = 8
 
+spi = spidev.SpiDev()
+spi.open(0,0)
 
-def getChannel(channel):
+
+def readChannel(channel):
 	adc = spi.xfer2([1,(8+channel)<<4,0])
 	data = ((adc[1]&3) << 8) + adc[2]
-	return data
+	return data >> 2
 
 def getAnalog(n):
-	return [readCHannel(i) for i in range(n)]
+	return [readChannel(i) for i in range(n)]
 
 def getGPS():
 	pass
@@ -27,9 +32,8 @@ def getIMU():
 def getPing():
 	pass
 
-with open("conf.json") as f:
-	conf = json.load(f)
-	vals = []
+with open("conf.json") as fconf, open("dump.txt", "a") as fdump:
+	conf = json.load(fconf)
 	fsk = Fsk(conf)
 	fsk.start()
 
@@ -37,15 +41,15 @@ with open("conf.json") as f:
 	gps.start()
 
 	while True:
+		vals = []
 		vals.append(getAnalog(NUMBER_ANALOG))
 		vals.append(gps.get_data())
-		vals.append(getPing())
+		#vals.append(getPing())
 		
-		print(gps.get_data())
-
 		#for fmt in conf["sensors"]:
 		#	val = struct.unpack("!" + fmt, os.urandom(struct.calcsize(''.join(fmt))))
 		#	vals.append(val)
 
-		fsk.feed(struct.unpack(''.join(conf["sensors"]), vals))
-		time.sleep(0.5)
+		fsk.feed(vals)
+		fdump.write(",".join(map(str, vals)))
+		time.sleep(0.1)

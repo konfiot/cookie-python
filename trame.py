@@ -10,7 +10,7 @@ def trame(data, conf):
     out = bytearray([conf["trame"]["startbyte"]])
 
     for i, val in enumerate(data): # Concaténation des valeurs des capteurs
-        out += struct.pack("!"+ conf["sensors"][i], *val)
+        out += struct.pack(str("!"+ conf["sensors"][i]), *val)
 
     out += bytearray([functools.reduce(operator.xor, out)])
 
