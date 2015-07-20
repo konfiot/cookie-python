@@ -1,3 +1,4 @@
+import sys
 import threading
 import operator
 import binascii
@@ -40,12 +41,13 @@ class GPS(threading.Thread) :
 		self.ser.write(buildPMTK(bytearray("PMTK220,100")))
 
 		self.terminate = False
+		self.finish_terminated = False
 
 		self.out = [0]*4
 
 	def stop(self):
 		self.terminate = True
-		ser.close()
+		while not self.finish_terminated: pass
 
 	def run(self):
 		while not self.terminate:
@@ -69,19 +71,22 @@ class GPS(threading.Thread) :
 
 			if cs == csdata: 
 				if data[0] == "GPGGA":
-					self.out[0] = coord(data[2], data[3])
-					self.out[1] = coord(data[4], data[5])
+					self.out[0] = int(coord(data[2], data[3]) * 1e7)
+					self.out[1] = int(coord(data[4], data[5]) * 1e7)
 					if isfloat(data[9]):
-						self.out[2] = int(float(data[9])*100)
+						self.out[2] = int(float(data[9]))
 				elif data[0] == "GPRMC":
-					self.out[0] = coord(data[3], data[4])
-					self.out[1] = coord(data[5], data[6])
+					self.out[0] = int(coord(data[3], data[4]) * 1e7)
+					self.out[1] = int(coord(data[5], data[6]) * 1e7)
 					if isfloat(data[7]):
-						self.out[2] = int(float(data[7])*10)
+						self.out[2] = int(float(data[7]) * 100)
 				else:
 					print("Trame non reconnue", data[0])
 			else: 
 				print("CS Fucked up")
+
+		self.ser.close()
+		self.finish_terminated = True
 
 
 	def get_data(self):
