@@ -7,13 +7,9 @@ import time
 import os
 import spidev
 from gps import GPS
-
-
-NUMBER_ANALOG = 8
-
-spi = spidev.SpiDev()
-spi.open(0,0)
-
+import smbus
+import signal
+import sys
 
 def readChannel(channel):
 	adc = spi.xfer2([1,(8+channel)<<4,0])
@@ -27,10 +23,29 @@ def getGPS():
 	pass
 
 def getIMU():
+	return [read_word_data(IMU_ADDRESS, 2*n + 0x3B) for n in range(7)]
 	pass
 
 def getPing():
 	pass
+
+def signal_handler(signal, frame):
+	gps.stop()
+	fsk.stop()
+	sys.exit(0)
+
+NUMBER_ANALOG = 8
+
+IMU_ADDRESS = 0b1101000 # Or 0b1101001
+
+spi = spidev.SpiDev()
+spi.open(0,0)
+
+bus = smbus.SMBus(1)
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+
 
 with open("conf.json") as fconf, open("dump.txt", "a") as fdump:
 	conf = json.load(fconf)
@@ -45,10 +60,6 @@ with open("conf.json") as fconf, open("dump.txt", "a") as fdump:
 		vals.append(getAnalog(NUMBER_ANALOG))
 		vals.append(gps.get_data())
 		#vals.append(getPing())
-		
-		#for fmt in conf["sensors"]:
-		#	val = struct.unpack("!" + fmt, os.urandom(struct.calcsize(''.join(fmt))))
-		#	vals.append(val)
 
 		fsk.feed(vals)
 		fdump.write(",".join(map(str, vals)))
