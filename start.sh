@@ -1,2 +1,3 @@
 #!/bin/bash
-./main.py | play -t wav -
+(./cookie | play -t wav -) &
+pidof python2 > /var/run/cookie
