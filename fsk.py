@@ -19,6 +19,9 @@ class Fsk(threading.Thread) :
         self.to_send = initial_data
         self.conf = conf
 
+	self.terminate = False
+	self.finish_terminated = False
+
     def encode(self, data):
         for sample in itertools.chain.from_iterable((self.modulatebyte(c) for c in data)):
             yield sample
@@ -56,8 +59,14 @@ class Fsk(threading.Thread) :
     def run(self):
         self.terminate = False
         while not self.terminate:
-            audiogen.sampler.write_wav(sys.stdout, self.encode(trame.trame(self.to_send, self.conf)))
+	    try:
+		audiogen.sampler.write_wav(sys.stdout, self.encode(trame.trame(self.to_send, self.conf)))
+	    except:
+		pass
+	self.finish_terminated = True
 
     def stop(self):
         self.terminate = True
+	while not self.finish_terminated: pass
+	print("Termainated FSK")
 
