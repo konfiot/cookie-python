@@ -74,7 +74,7 @@ class GPS(threading.Thread) :
 					self.out[0] = int(coord(data[2], data[3]) * 1e7)
 					self.out[1] = int(coord(data[4], data[5]) * 1e7)
 					if isfloat(data[9]):
-						self.out[2] = int(float(data[9]))
+						self.out[3] = int(float(data[9]))
 				elif data[0] == "GPRMC":
 					self.out[0] = int(coord(data[3], data[4]) * 1e7)
 					self.out[1] = int(coord(data[5], data[6]) * 1e7)
