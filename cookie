@@ -7,6 +7,7 @@ import time
 import os
 import spidev
 from gps import GPS
+from ping import Ping
 import smbus
 import signal
 import sys
@@ -31,6 +32,7 @@ def getPing():
 
 def signal_handler(signal, frame):
 	gps.stop()
+	ping.stop()
 	fsk.stop()
 	sys.exit(0)
 
@@ -55,11 +57,16 @@ with open("conf.json") as fconf, open("dump.txt", "a") as fdump:
 	gps = GPS("/dev/ttyS3", 38400)
 	gps.start()
 
+	ping = Ping(size = .783)
+	ping.start()
+
 	while True:
 		vals = []
 		vals.append(getAnalog(NUMBER_ANALOG))
 		vals.append(gps.get_data())
-		#vals.append(getPing())
+		vals.append(ping.get_data())
+
+		#sys.stderr.write(str(ping.get_data()[0]) + "\n")
 
 		fsk.feed(vals)
 		fdump.write(",".join(map(str, vals)))
