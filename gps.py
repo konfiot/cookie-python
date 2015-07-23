@@ -62,12 +62,12 @@ class GPS(threading.Thread) :
 
 			try:
 				cs = binascii.unhexlify(self.ser.read(2))
+				data = str(buf.decode("ascii", errors="replace")).split(",")
 			except:
 				continue
 
 			csdata = bytearray([functools.reduce(operator.xor, buf)])
 
-			data = str(buf.decode("ascii", errors="replace")).split(",")
 
 			if cs == csdata: 
 				if data[0] == "GPGGA":
