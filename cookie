@@ -2,15 +2,16 @@
 
 from fsk import Fsk
 import struct
-import json 
+import json
 import time
 import os
 import spidev
 from gps import GPS
 from ping import Ping
-import smbus
 import signal
 import sys
+from imu import IMU
+
 
 def readChannel(channel):
 	adc = spi.xfer2([1,(8+channel)<<4,0])
@@ -20,21 +21,11 @@ def readChannel(channel):
 def getAnalog(n):
 	return [readChannel(i) for i in range(n)]
 
-def getIMU():
-	out = [bus.read_word_data(IMU_ADDRESS, 2*n + 0x3B) for n in range(7)]
-
-	bus.write_byte_data(IMU_ADDRESS, 0x37, 0x02)
-	time.sleep(0.01)
-	bus.write_byte_data(IMU_MAG_ADDRESS, 0x0A, 0x01)
-	time.sleep(0.01)
-
-	out += [bus.read_word_data(IMU_MAG_ADDRESS, 2*n + 0x03) for n in range(3)]
-	return out
-
 def signal_handler(signal, frame):
 	gps.stop()
 	ping.stop()
 	fsk.stop()
+	imu.stop()
 	sys.exit(0)
 
 NUMBER_ANALOG = 8
@@ -44,14 +35,6 @@ IMU_MAG_ADDRESS = 0x0C
 
 spi = spidev.SpiDev()
 spi.open(0,0)
-
-bus = smbus.SMBus(2)
-
-b = bus.read_byte_data(IMU_ADDRESS, 0x6B)
-b ^= (1 << 6)
-bus.write_byte_data(IMU_ADDRESS, 0x6B, b)
-
-
 
 
 signal.signal(signal.SIGINT, signal_handler)
@@ -69,16 +52,19 @@ with open("conf.json") as fconf, open("dump.txt", "a") as fdump:
 	ping = Ping(size = .783)
 	ping.start()
 
+	imu = IMU(IMU_ADDRESS, IMU_MAG_ADDRESS)
+	imu.start()
+
 	while True:
 		vals = []
 		vals.append(getAnalog(NUMBER_ANALOG))
 		vals.append(gps.get_data())
 		vals.append(ping.get_data())
-		vals.append(getIMU())
+		vals.append(imu.get_data())
 
 		#sys.stderr.write(str(ping.get_data()[0]) + "\n")
 
-		#print("\t".join(map(str, getIMU())))
+		#print("\t".join(map(str, imu.get_data())))
 
 		fsk.feed(vals)
 		fdump.write(",".join(map(str, vals)))
